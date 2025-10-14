@@ -3,10 +3,10 @@ import argparse
 from collections import defaultdict
 from file_read import read_all_files, process_all_documents
 from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy
-from strateg.clustering import KMeansClusteringStrategy, FixedClusteringStrategy
+from strateg.clustering import KMeansClusteringStrategy
 
 
-def save_clustered_paragraphs(clustered_data, output_dir, filenames):
+def save_clustered_paragraphs(clustered_data, output_dir):
     """Сохранение абзацев по тематикам"""
 
     for cluster_id, paragraphs_data in clustered_data.items():
@@ -37,10 +37,8 @@ def main():
                        choices=['paragraph', 'sentence', 'section'],
                        help='Стратегия разбиения')
     parser.add_argument('--clustering', '-c', default='kmeans',
-                       choices=['kmeans', 'fixed'],
+                       choices=['kmeans'],
                        help='Стратегия кластеризации')
-    parser.add_argument('--clusters', type=int, default=None,
-                       help='Количество кластеров (для fixed)')
 
     args = parser.parse_args()
     os.makedirs(args.output, exist_ok=True)
@@ -55,8 +53,6 @@ def main():
 
     if args.clustering == 'kmeans':
         clustering_strategy = KMeansClusteringStrategy()
-    elif args.clustering == 'fixed':
-        clustering_strategy = FixedClusteringStrategy(n_clusters=args.clusters)
 
     if not texts:
         return

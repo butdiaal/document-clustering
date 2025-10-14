@@ -17,7 +17,7 @@ def read_all_files(input_dir):
     return texts, filenames
 
 
-def process_all_documents(texts, filenames, splitting_strategy, clustering_strategy):
+def process_all_documents(texts, filenames, splitting_strategy):
     """Обработка всех документов"""
 
     all_fragments = []
