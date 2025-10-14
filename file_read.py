@@ -97,5 +97,4 @@ def process_all_documents(texts, filenames):
             'paragraph_id': i
         })
 
-
     return clustered_data, len(all_paragraphs)
