@@ -17,7 +17,7 @@ def read_all_files(input_dir):
     return texts, filenames
 
 
-def process_all_documents(texts, filenames, splitting_strategy):
+def process_all_documents(texts, filenames, splitting_strategy, clustering_strategy):
     """Обработка всех документов"""
 
     all_fragments = []
@@ -29,7 +29,7 @@ def process_all_documents(texts, filenames, splitting_strategy):
         fragment_sources.extend([filename] * len(fragments))
 
     clustered_data = defaultdict(list)
-    for i, (fragments, source, cluster_id) in enumerate(zip(all_paragraphs, paragraph_sources, cluster_labels)):
+    for i, (fragments, source, cluster_id) in enumerate(zip(all_fragments, fragment_sources)):
         clustered_data[cluster_id].append({
             'text': fragments,
             'source': source,
