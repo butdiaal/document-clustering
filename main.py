@@ -5,7 +5,7 @@ from file_read import read_all_files, process_all_documents
 
 
 def save_clustered_paragraphs(clustered_data, output_dir, filenames):
-    """Сохранение кластеризованных абзацев по тематикам"""
+    """Сохранение абзацев по тематикам"""
 
     for cluster_id, paragraphs_data in clustered_data.items():
         topic_dir = os.path.join(output_dir, f"topic_{cluster_id + 1}")
