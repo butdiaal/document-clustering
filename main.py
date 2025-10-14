@@ -2,6 +2,8 @@ import os
 import argparse
 from collections import defaultdict
 from file_read import read_all_files, process_all_documents
+from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy
+from strateg.clustering import KMeansClusteringStrategy, FixedClusteringStrategy
 
 
 def save_clustered_paragraphs(clustered_data, output_dir, filenames):
@@ -31,15 +33,38 @@ def main():
                         help='Входная директория')
     parser.add_argument('--output', '-o', default='result_data',
                         help='Выходная директория')
+    parser.add_argument('--splitting', '-s', default='paragraph',
+                       choices=['paragraph', 'sentence', 'section'],
+                       help='Стратегия разбиения')
+    parser.add_argument('--clustering', '-c', default='kmeans',
+                       choices=['kmeans', 'fixed'],
+                       help='Стратегия кластеризации')
+    parser.add_argument('--clusters', type=int, default=None,
+                       help='Количество кластеров (для fixed)')
 
     args = parser.parse_args()
     os.makedirs(args.output, exist_ok=True)
     texts, filenames = read_all_files(args.input)
 
+    if args.splitting == 'paragraph':
+        splitting_strategy = ParagraphSplittingStrategy()
+    elif args.splitting == 'sentence':
+        splitting_strategy = SentenceSplittingStrategy()
+    elif args.splitting == 'section':
+        splitting_strategy = SectionSplittingStrategy()
+
+    if args.clustering == 'kmeans':
+        clustering_strategy = KMeansClusteringStrategy()
+    elif args.clustering == 'fixed':
+        clustering_strategy = FixedClusteringStrategy(n_clusters=args.clusters)
+
     if not texts:
         return
 
-    clustered_data, total_paragraphs = process_all_documents(texts, filenames)
+    clustered_data, total_fragments = process_all_documents(
+        texts, filenames, splitting_strategy, clustering_strategy
+    )
+
     save_clustered_paragraphs(clustered_data, args.output, filenames)
 
 
