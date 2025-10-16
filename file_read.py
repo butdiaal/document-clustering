@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+from strateg.splitting import ParagraphSplittingStrategy
 
 
 def read_all_files(input_dir):
@@ -17,7 +18,7 @@ def read_all_files(input_dir):
     return texts, filenames
 
 
-def process_all_documents(texts, filenames, splitting_strategy):
+def extract_paragraphs(texts, filenames, splitting_strategy):
     """Обработка всех документов"""
 
     all_fragments = []
@@ -28,12 +29,24 @@ def process_all_documents(texts, filenames, splitting_strategy):
         all_fragments.extend(fragments)
         fragment_sources.extend([filename] * len(fragments))
 
+    return all_fragments, fragment_sources
+
+
+def process_all_documents(texts, filenames, splitting_strategy, feature_strategy, clustering_strategy):
+    """Обработка всех документов"""
+
+    all_fragments, fragment_sources = extract_paragraphs(texts, filenames, splitting_strategy)
+
+    features = feature_strategy.transform(all_fragments)
+
+    cluster_labels = clustering_strategy.cluster(features)
+
     clustered_data = defaultdict(list)
-    for i, (fragments, source, cluster_id) in enumerate(zip(all_fragments, fragment_sources)):
+    for i, (fragment, source, cluster_id) in enumerate(zip(all_fragments, fragment_sources, cluster_labels)):
         clustered_data[cluster_id].append({
-            'text': fragments,
+            'text': fragment,
             'source': source,
-            'paragraph_id': i
+            'fragment_id': i
         })
 
     return clustered_data, len(all_fragments)

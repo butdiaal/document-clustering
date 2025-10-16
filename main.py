@@ -3,7 +3,8 @@ import argparse
 from collections import defaultdict
 from file_read import read_all_files, process_all_documents
 from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy
-from strateg.clustering import KMeansClusteringStrategy
+from strateg.feature import TFIDFStrategy, BERTStrategy
+from strateg.clustering import KMeansClusteringStrategy, DBSCANClusteringStrategy
 
 
 def save_clustered_paragraphs(clustered_data, output_dir):
@@ -36,8 +37,11 @@ def main():
     parser.add_argument('--splitting', '-s', default='paragraph',
                        choices=['paragraph', 'sentence', 'section'],
                        help='Стратегия разбиения')
+    parser.add_argument('--features', '-f', default='tfidf',
+                        choices=['tfidf', 'bert'],
+                        help='Стратегия признаков')
     parser.add_argument('--clustering', '-c', default='kmeans',
-                       choices=['kmeans'],
+                       choices=['kmeans', 'dbscan'],
                        help='Стратегия кластеризации')
 
     args = parser.parse_args()
@@ -51,18 +55,24 @@ def main():
     elif args.splitting == 'section':
         splitting_strategy = SectionSplittingStrategy()
 
+    if args.features == 'tfidf':
+        feature_strategy = TFIDFStrategy()
+    elif args.features == 'bert':
+        feature_strategy = BERTStrategy()
+
     if args.clustering == 'kmeans':
         clustering_strategy = KMeansClusteringStrategy()
+    elif args.clustering == 'dbscan':
+        clustering_strategy = DBSCANClusteringStrategy()
 
     if not texts:
         return
 
     clustered_data, total_fragments = process_all_documents(
-        texts, filenames, splitting_strategy, clustering_strategy
+        texts, filenames, splitting_strategy, feature_strategy, clustering_strategy
     )
 
-    save_clustered_paragraphs(clustered_data, args.output, filenames)
-
+    save_clustered_paragraphs(clustered_data, args.output)
 
 if __name__ == "__main__":
     main()
