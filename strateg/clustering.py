@@ -29,11 +29,6 @@ class KMeansClusteringStrategy(ClusteringStrategy):
         return cluster_labels
 
 
-class HierarchicalClusteringStrategy(ClusteringStrategy):
-    """Иерархическая кластеризация"""
-    pass
-
-
 class DBSCANClusteringStrategy(ClusteringStrategy):
     """Плотностная кластеризация DBSCAN"""
 
@@ -49,4 +44,27 @@ class DBSCANClusteringStrategy(ClusteringStrategy):
         cluster_labels = dbscan.fit_predict(features)
 
         cluster_labels = [label if label != -1 else max(cluster_labels) + 1 for label in cluster_labels]
+        return cluster_labels
+
+
+class HierarchicalClusteringStrategy(ClusteringStrategy):
+    """Иерархическая кластеризация"""
+
+    def __init__(self, n_clusters=None, linkage='ward'):
+        self.n_clusters = n_clusters
+        self.linkage = linkage
+
+    def cluster(self, features):
+        if hasattr(features, 'toarray'):
+            features = features.toarray()
+
+        n_clusters = self.n_clusters
+        if n_clusters is None:
+            n_clusters = min(8, max(2, len(features) // 3))
+
+        hierarchical = AgglomerativeClustering(
+            n_clusters=n_clusters,
+            linkage=self.linkage
+        )
+        cluster_labels = hierarchical.fit_predict(features)
         return cluster_labels

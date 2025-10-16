@@ -4,7 +4,7 @@ from collections import defaultdict
 from file_read import read_all_files, process_all_documents
 from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy
 from strateg.feature import TFIDFStrategy, BERTStrategy
-from strateg.clustering import KMeansClusteringStrategy, DBSCANClusteringStrategy
+from strateg.clustering import KMeansClusteringStrategy, DBSCANClusteringStrategy, HierarchicalClusteringStrategy
 
 
 def save_clustered_paragraphs(clustered_data, output_dir):
@@ -41,7 +41,7 @@ def main():
                         choices=['tfidf', 'bert'],
                         help='Стратегия признаков')
     parser.add_argument('--clustering', '-c', default='kmeans',
-                       choices=['kmeans', 'dbscan'],
+                       choices=['kmeans', 'dbscan', 'hierarchical'],
                        help='Стратегия кластеризации')
 
     args = parser.parse_args()
@@ -64,6 +64,8 @@ def main():
         clustering_strategy = KMeansClusteringStrategy()
     elif args.clustering == 'dbscan':
         clustering_strategy = DBSCANClusteringStrategy()
+    elif args.clustering == 'hierarchical':
+        clustering_strategy = HierarchicalClusteringStrategy()
 
     if not texts:
         return
