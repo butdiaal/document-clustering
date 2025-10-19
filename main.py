@@ -2,7 +2,7 @@ import os
 import argparse
 from collections import defaultdict
 from file_read import read_all_files, process_all_documents
-from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy
+from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy, SemanticSplittingStrategy
 from strateg.feature import TFIDFStrategy, BERTStrategy
 from strateg.clustering import KMeansClusteringStrategy, DBSCANClusteringStrategy, HierarchicalClusteringStrategy
 
@@ -27,7 +27,6 @@ def save_clustered_paragraphs(clustered_data, output_dir):
                     f.write(para_data['text'])
 
 
-
 def main():
     parser = argparse.ArgumentParser(description='Кластеризация документов по тематикам')
     parser.add_argument('--input', '-i', default='data',
@@ -35,7 +34,7 @@ def main():
     parser.add_argument('--output', '-o', default='result_data',
                         help='Выходная директория')
     parser.add_argument('--splitting', '-s', default='paragraph',
-                       choices=['paragraph', 'sentence', 'section'],
+                       choices=['paragraph', 'sentence', 'section', 'semantic'],
                        help='Стратегия разбиения')
     parser.add_argument('--features', '-f', default='tfidf',
                         choices=['tfidf', 'bert'],
@@ -54,6 +53,8 @@ def main():
         splitting_strategy = SentenceSplittingStrategy()
     elif args.splitting == 'section':
         splitting_strategy = SectionSplittingStrategy()
+    elif args.splitting == 'semantic':
+        splitting_strategy = SemanticSplittingStrategy()
 
     if args.features == 'tfidf':
         feature_strategy = TFIDFStrategy()
