@@ -2,7 +2,7 @@ import os
 import argparse
 from collections import defaultdict
 from file_read import read_all_files, process_all_documents
-from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy, SemanticSplittingStrategy
+from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy, SemanticSplittingStrategy, CombinedSplittingStrategy, SmartSemanticSplittingStrategy
 from strateg.feature import TFIDFStrategy, BERTStrategy
 from strateg.clustering import KMeansClusteringStrategy, DBSCANClusteringStrategy, HierarchicalClusteringStrategy
 
@@ -34,7 +34,7 @@ def main():
     parser.add_argument('--output', '-o', default='result_data',
                         help='Выходная директория')
     parser.add_argument('--splitting', '-s', default='paragraph',
-                       choices=['paragraph', 'sentence', 'section', 'semantic'],
+                       choices=['paragraph', 'sentence', 'section', 'semantic', 'combined', 'smart_semantic'],
                        help='Стратегия разбиения')
     parser.add_argument('--features', '-f', default='tfidf',
                         choices=['tfidf', 'bert'],
@@ -55,6 +55,10 @@ def main():
         splitting_strategy = SectionSplittingStrategy()
     elif args.splitting == 'semantic':
         splitting_strategy = SemanticSplittingStrategy()
+    elif args.splitting == 'combined':
+        splitting_strategy = CombinedSplittingStrategy()
+    elif args.splitting == 'smart_semantic':
+        splitting_strategy = SmartSemanticSplittingStrategy()
 
     if args.features == 'tfidf':
         feature_strategy = TFIDFStrategy()
