@@ -2,7 +2,7 @@ import os
 import argparse
 from collections import defaultdict
 from file_read import read_all_files, process_all_documents
-from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy, SemanticSplittingStrategy, CombinedSplittingStrategy, SmartSemanticSplittingStrategy
+from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy, SemanticSplittingStrategy, CombinedSplittingStrategy
 from strateg.feature import TFIDFStrategy, BERTStrategy
 from strateg.clustering import KMeansClusteringStrategy, DBSCANClusteringStrategy, HierarchicalClusteringStrategy
 
