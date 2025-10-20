@@ -1,5 +1,4 @@
 import os
-from typing import Union
 
 
 SIMILARITY_THRESHOLD = float(os.getenv('SIMILARITY_THRESHOLD', 0.7))
