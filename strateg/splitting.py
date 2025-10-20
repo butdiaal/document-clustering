@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 import re
-import os
-from scipy.signal import argrelextrema
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import KMeans

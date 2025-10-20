@@ -1,6 +1,5 @@
 import os
 from collections import defaultdict
-from strateg.splitting import ParagraphSplittingStrategy
 
 
 def read_all_files(input_dir):
