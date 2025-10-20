@@ -85,76 +85,6 @@ class SectionSplittingStrategy(SplittingStrategy):
         return [p for p in paragraphs if len(p) > 50]
 
 
-class SemanticSplittingStrategy(SplittingStrategy):
-    """Семантическое разбиение"""
-
-    def __init__(self, min_length=50):
-        self.min_length = min_length or MIN_LENGTH
-        self.model = SentenceTransformer(BERT_MODEL_NAME)
-
-    def split(self, text):
-        """Разбивает текст на семантические сегменты"""
-        lines = [line.strip() for line in text.split('\n') if line.strip() and len(line.strip()) > 10]
-
-        if len(lines) <= 1:
-            return [' '.join(lines)] if lines else []
-
-        embeddings = self.model.encode(lines, normalize_embeddings=True)
-
-        similarities = []
-        for i in range(len(embeddings) - 1):
-            sim = np.dot(embeddings[i], embeddings[i + 1])
-            similarities.append(sim)
-
-        similarities = np.array(similarities)
-
-        boundaries = self.find_boundaries(similarities)
-
-        segments = self.create_segments(lines, boundaries)
-
-        return [s for s in segments if len(s) >= self.min_length]
-
-    def find_boundaries(self, similarities):
-        """Поиск границ через локальные минимумы"""
-        if len(similarities) < 3:
-            return []
-
-        minima = argrelextrema(similarities, np.less)[0]
-
-        if len(minima) == 0:
-            return []
-
-        avg_similarity = np.mean(similarities)
-        boundaries = []
-
-        for min_idx in minima:
-            if similarities[min_idx] < avg_similarity:
-                boundaries.append(min_idx + 1)  # +1 как в том коде
-
-        return boundaries
-
-    def create_segments(self, lines, boundaries):
-        """Собирает сегменты по границам"""
-        if not boundaries:
-            return [' '.join(lines)]
-
-        segments = []
-        start = 0
-
-        for boundary in boundaries:
-            segment_lines = lines[start:boundary]
-            if segment_lines:
-                segment = ' '.join(segment_lines)
-                segments.append(segment)
-            start = boundary
-
-        if start < len(lines):
-            segment = ' '.join(lines[start:])
-            segments.append(segment)
-
-        return segments
-
-
 class CombinedSplittingStrategy(SplittingStrategy):
     """Комбинированное разбиение: предложения + кластеризация + мета-абзацы"""
 
@@ -214,7 +144,7 @@ class CombinedSplittingStrategy(SplittingStrategy):
         return meta_paragraphs if meta_paragraphs else [text]
 
 
-class SmartSemanticSplittingStrategy(SplittingStrategy):
+class SemanticSplittingStrategy(SplittingStrategy):
     """Семантическое разбиение с учетом структуры и смысла"""
 
     def __init__(self, min_length=50):

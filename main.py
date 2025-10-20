@@ -34,7 +34,7 @@ def main():
     parser.add_argument('--output', '-o', default='result_data',
                         help='Выходная директория')
     parser.add_argument('--splitting', '-s', default='paragraph',
-                       choices=['paragraph', 'sentence', 'section', 'semantic', 'combined', 'smart_semantic'],
+                       choices=['paragraph', 'sentence', 'section', 'combined', 'semantic'],
                        help='Стратегия разбиения')
     parser.add_argument('--features', '-f', default='tfidf',
                         choices=['tfidf', 'bert'],
@@ -53,12 +53,11 @@ def main():
         splitting_strategy = SentenceSplittingStrategy()
     elif args.splitting == 'section':
         splitting_strategy = SectionSplittingStrategy()
-    elif args.splitting == 'semantic':
-        splitting_strategy = SemanticSplittingStrategy()
     elif args.splitting == 'combined':
         splitting_strategy = CombinedSplittingStrategy()
-    elif args.splitting == 'smart_semantic':
-        splitting_strategy = SmartSemanticSplittingStrategy()
+    elif args.splitting == 'semantic':
+        splitting_strategy = SemanticSplittingStrategy()
+
 
     if args.features == 'tfidf':
         feature_strategy = TFIDFStrategy()
