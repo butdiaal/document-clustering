@@ -1,10 +1,11 @@
 import os
 import argparse
+import logging
 from collections import defaultdict
 from file_read import read_all_files, process_all_documents
 from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy, SemanticSplittingStrategy, CombinedSplittingStrategy
 from strateg.feature import TFIDFStrategy, BERTStrategy
-from strateg.clustering import KMeansClusteringStrategy, DBSCANClusteringStrategy, HierarchicalClusteringStrategy
+from strateg.clustering import KMeansClusteringStrategy, DBSCANClusteringStrategy, HierarchicalClusteringStrategy, SemanticClusteringStrategy
 
 
 def save_clustered_paragraphs(clustered_data, output_dir):
@@ -33,17 +34,31 @@ def main():
                         help='Входная директория')
     parser.add_argument('--output', '-o', default='result_data',
                         help='Выходная директория')
-    parser.add_argument('--splitting', '-s', default='paragraph',
+    parser.add_argument('--splitting', '-s', default='combined',
                        choices=['paragraph', 'sentence', 'section', 'combined', 'semantic'],
                        help='Стратегия разбиения')
-    parser.add_argument('--features', '-f', default='tfidf',
+    parser.add_argument('--features', '-f', default='bert',
                         choices=['tfidf', 'bert'],
                         help='Стратегия признаков')
-    parser.add_argument('--clustering', '-c', default='kmeans',
-                       choices=['kmeans', 'dbscan', 'hierarchical'],
+    parser.add_argument('--clustering', '-c', default='semantic',
+                       choices=['kmeans', 'dbscan', 'hierarchical', 'semantic'],
                        help='Стратегия кластеризации')
 
     args = parser.parse_args()
+
+    if args.splitting == 'combined':
+        if args.features == 'tfidf':
+            logging.warning("Для комбинированного разбиения признак 'bert'")
+            args.features = 'bert'
+        if args.clustering == 'kmeans':
+            logging.warning("Для комбинированного разбиения кластеризация 'semantic'")
+            args.clustering = 'semantic'
+
+    if args.splitting == 'semantic':
+        if args.features == 'tfidf':
+            logging.warning("Для семантического разбиения признак 'bert'")
+            args.features = 'bert'
+
     os.makedirs(args.output, exist_ok=True)
     texts, filenames = read_all_files(args.input)
 
@@ -70,6 +85,8 @@ def main():
         clustering_strategy = DBSCANClusteringStrategy()
     elif args.clustering == 'hierarchical':
         clustering_strategy = HierarchicalClusteringStrategy()
+    elif args.clustering == 'semantic':
+        clustering_strategy = SemanticClusteringStrategy()
 
     if not texts:
         return
