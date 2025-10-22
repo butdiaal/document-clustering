@@ -164,7 +164,7 @@ class SemanticSplittingStrategy(SplittingStrategy):
     def analyze_similarity_breaks(self, similarity_series):
         """Анализирует провалы в ряду схожестей через Depth Score"""
         if len(similarity_series) < 2:
-            return [True] * len(similarity_series)  # Все объединяем
+            return [True] * len(similarity_series)
 
         merge_decisions = []
 
