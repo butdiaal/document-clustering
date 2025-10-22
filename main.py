@@ -5,6 +5,7 @@ from collections import defaultdict
 from file_read import read_all_files, process_all_documents
 from strateg.splitting import ParagraphSplittingStrategy, SentenceSplittingStrategy, SectionSplittingStrategy, SemanticSplittingStrategy, CombinedSplittingStrategy
 from strateg.feature import TFIDFStrategy, BERTStrategy
+from analysis import evaluate_results
 from strateg.clustering import KMeansClusteringStrategy, DBSCANClusteringStrategy, HierarchicalClusteringStrategy, SemanticClusteringStrategy
 
 
@@ -96,6 +97,8 @@ def main():
     )
 
     save_clustered_paragraphs(clustered_data, args.output)
+    evaluate_results(clustered_data, args.output)
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     main()

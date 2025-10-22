@@ -71,13 +71,38 @@ class HierarchicalClusteringStrategy(ClusteringStrategy):
         cluster_labels = hierarchical.fit_predict(features)
         return cluster_labels
 
+#
+# class SemanticClusteringStrategy(ClusteringStrategy):
+#     """Семантическая кластеризация для создания мета-абзацев"""
+#
+#     def __init__(self, eps=None, min_samples=None, model_name=BERT_MODEL_NAME):
+#         self.eps = eps or EPS_DBSCAN
+#         self.min_samples = min_samples or MIN_SAMPLES_DBSCAN
+#         self.model = SentenceTransformer(model_name)
+#
+#     def cluster(self, features):
+#         """Кластеризует текстовые фрагменты по семантической близости"""
+#
+#         if len(features) <= 1:
+#             return [0] * len(features) if features else []
+#
+#         if hasattr(features, 'shape'):
+#             embeddings = features
+#         else:
+#             embeddings = self.model.encode(features, normalize_embeddings=True)
+#
+#         dbscan = DBSCAN(eps=self.eps, min_samples=self.min_samples)
+#         cluster_labels = dbscan.fit_predict(embeddings)
+#
+#         cluster_labels = [label if label != -1 else max(cluster_labels) + 1 for label in cluster_labels]
+#
+#         return cluster_labels
 
 class SemanticClusteringStrategy(ClusteringStrategy):
     """Семантическая кластеризация для создания мета-абзацев"""
 
-    def __init__(self, eps=0.5, min_samples=2, model_name=BERT_MODEL_NAME):
-        self.eps = eps
-        self.min_samples = min_samples
+    def __init__(self, n_clusters=8, model_name=BERT_MODEL_NAME):
+        self.n_clusters = n_clusters or MAX_CLUSTERS
         self.model = SentenceTransformer(model_name)
 
     def cluster(self, features):
@@ -91,9 +116,8 @@ class SemanticClusteringStrategy(ClusteringStrategy):
         else:
             embeddings = self.model.encode(features, normalize_embeddings=True)
 
-        dbscan = DBSCAN(eps=self.eps, min_samples=self.min_samples)
-        cluster_labels = dbscan.fit_predict(embeddings)
-
-        cluster_labels = [label if label != -1 else max(cluster_labels) + 1 for label in cluster_labels]
+        n_clusters = min(self.n_clusters, len(embeddings))
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+        cluster_labels = kmeans.fit_predict(embeddings)
 
         return cluster_labels
