@@ -112,7 +112,7 @@ class CombinedSplittingStrategy(SplittingStrategy):
 
 
 class SemanticSplittingStrategy(SplittingStrategy):
-    """Семантическое разбиение с объединением соседних абзацев через анализ ряда схожестей"""
+    """Семантическая стратегия разбиения"""
 
     def __init__(self):
         self.model = SentenceTransformer(BERT_MODEL_NAME)
@@ -123,6 +123,19 @@ class SemanticSplittingStrategy(SplittingStrategy):
         score = 0.5 * (левый_л_макс + правый_л_макс - 2 * л_мин)
         """
         return 0.5 * (left_max + right_max - 2 * minimum)
+
+    def find_local_maxima(self, series, window=2):
+        """Находит локальные максимумы в ряду"""
+        maxima = []
+        for i in range(window, len(series) - window):
+            is_maximum = True
+            for j in range(1, window + 1):
+                if series[i] < series[i - j] or series[i] < series[i + j]:
+                    is_maximum = False
+                    break
+            if is_maximum:
+                maxima.append((i, series[i]))
+        return maxima
 
     def split(self, text):
         """Разбивает текст с анализом схожести между соседними абзацами"""
@@ -139,7 +152,6 @@ class SemanticSplittingStrategy(SplittingStrategy):
         final_paragraphs = self.split_large_paragraphs(processed_paragraphs)
 
         return [p for p in final_paragraphs if len(p) >= MIN_LENGTH]
-
 
     def build_similarity_series(self, paragraphs):
         """Строит ряд схожестей между соседними абзацами"""
@@ -173,52 +185,60 @@ class SemanticSplittingStrategy(SplittingStrategy):
         return similarities
 
     def analyze_similarity_breaks(self, similarity_series):
-        """Анализирует провалы в ряду схожестей через Depth Score"""
-        if len(similarity_series) < 2:
+        """Анализирует провалы в ряду схожестей через Death Score"""
+        if len(similarity_series) < 5:
             return [True] * len(similarity_series)
 
         merge_decisions = []
 
+        local_maxima = self.find_local_maxima(similarity_series, window=1)
+        maxima_indices = {idx for idx, _ in local_maxima}
+
         for i in range(len(similarity_series)):
             current_similarity = similarity_series[i]
 
-            if i == 0:
-                left_max = current_similarity
-                right_max = similarity_series[i + 1] if i + 1 < len(similarity_series) else current_similarity
-                death_score = self.calculate_death_score(left_max, right_max, current_similarity)
-            elif i == len(similarity_series) - 1:
-                left_max = similarity_series[i - 1]
-                right_max = current_similarity
-                death_score = self.calculate_death_score(left_max, right_max, current_similarity)
-            else:
-                left_max = max(similarity_series[i - 1],
-                               similarity_series[i - 2] if i - 2 >= 0 else similarity_series[i - 1])
-                right_max = max(similarity_series[i + 1],
-                                similarity_series[i + 2] if i + 2 < len(similarity_series) else similarity_series[
-                                    i + 1])
-                death_score = self.calculate_death_score(left_max, right_max, current_similarity)
+            if i in maxima_indices:
+                merge_decisions.append(True)
+                continue
 
-            should_merge = (death_score <= 0.15 and current_similarity > self.similarity_threshold)
+            left_max = None
+            right_max = None
+
+            for j in range(i-1, -1, -1):
+                if j in maxima_indices:
+                    left_max = similarity_series[j]
+                    break
+
+            for j in range(i+1, len(similarity_series)):
+                if j in maxima_indices:
+                    right_max = similarity_series[j]
+                    break
+
+            if left_max is not None and right_max is not None:
+                death_score = self.calculate_death_score(left_max, right_max, current_similarity)
+                should_merge = death_score < 0.2
+            else:
+                should_merge = current_similarity > self.similarity_threshold
+
             merge_decisions.append(should_merge)
 
         return merge_decisions
 
-
     def merge_paragraphs_by_decisions(self, paragraphs, merge_decisions):
-            """Объединяет абзацы на основе решений о слиянии"""
-            processed = []
-            current_group = [paragraphs[0]]
+        """Объединяет абзацы на основе решений о слиянии"""
+        processed = []
+        current_group = [paragraphs[0]]
 
-            for i in range(1, len(paragraphs)):
-                if merge_decisions[i - 1]:
-                    current_group.append(paragraphs[i])
-                else:
-                    processed.append("\n\n".join(current_group))
-                    current_group = [paragraphs[i]]
+        for i in range(1, len(paragraphs)):
+            if merge_decisions[i - 1]:
+                current_group.append(paragraphs[i])
+            else:
+                processed.append("\n\n".join(current_group))
+                current_group = [paragraphs[i]]
 
-            processed.append("\n\n".join(current_group))
+        processed.append("\n\n".join(current_group))
 
-            return processed
+        return processed
 
     def split_into_elements(self, paragraph):
         """Разбивает абзац на элементы (предложения)"""
@@ -267,20 +287,35 @@ class SemanticSplittingStrategy(SplittingStrategy):
         return fragments if fragments else [paragraph]
 
     def find_semantic_breaks(self, similarities):
-        """Находит семантические провалы в ряду схожестей через Depth Score"""
-        if len(similarities) < 3:
+        """Находит семантические провалы в ряду схожестей через Death Score"""
+        if len(similarities) < 5:
             return []
 
         breaks = []
+        local_maxima = self.find_local_maxima(similarities, window=1)
+        maxima_indices = {idx for idx, _ in local_maxima}
 
-        for i in range(1, len(similarities) - 1):
-            left_max = max(similarities[i - 1], similarities[i - 2] if i - 2 >= 0 else similarities[i - 1])
-            right_max = max(similarities[i + 1],
-                            similarities[i + 2] if i + 2 < len(similarities) else similarities[i + 1])
-            death_score = self.calculate_death_score(left_max, right_max, similarities[i])
+        for i in range(2, len(similarities) - 2):
+            if i in maxima_indices:
+                continue
 
-            if death_score > 0.15 and similarities[i] < self.similarity_threshold:
-                breaks.append(i)
+            left_max = None
+            right_max = None
+
+            for j in range(i-1, -1, -1):
+                if j in maxima_indices:
+                    left_max = similarities[j]
+                    break
+
+            for j in range(i+1, len(similarities)):
+                if j in maxima_indices:
+                    right_max = similarities[j]
+                    break
+
+            if left_max is not None and right_max is not None:
+                death_score = self.calculate_death_score(left_max, right_max, similarities[i])
+                if death_score > 0.2 and similarities[i] < self.similarity_threshold:
+                    breaks.append(i)
 
         return breaks
 
