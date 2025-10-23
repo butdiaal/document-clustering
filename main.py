@@ -51,21 +51,21 @@ def main():
     parser.add_argument(
         "--splitting",
         "-s",
-        default="sentence",
+        default="semantic",
         choices=["paragraph", "sentence", "section", "combined", "semantic"],
         help="Стратегия разбиения",
     )
     parser.add_argument(
         "--features",
         "-f",
-        default="tfidf",
+        default="bert",
         choices=["tfidf", "bert"],
         help="Стратегия признаков",
     )
     parser.add_argument(
         "--clustering",
         "-c",
-        default="kmeans",
+        default="semantic",
         choices=["kmeans", "dbscan", "hierarchical", "semantic"],
         help="Стратегия кластеризации",
     )
