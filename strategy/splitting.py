@@ -118,6 +118,12 @@ class SemanticSplittingStrategy(SplittingStrategy):
         self.model = SentenceTransformer(BERT_MODEL_NAME)
         self.similarity_threshold = SIMILARITY_THRESHOLD
 
+    def calculate_death_score(self, left_max, right_max, minimum):
+        """
+        score = 0.5 * (левый_л_макс + правый_л_макс - 2 * л_мин)
+        """
+        return 0.5 * (left_max + right_max - 2 * minimum)
+
     def split(self, text):
         """Разбивает текст с анализом схожести между соседними абзацами"""
         raw_paragraphs = [p.strip() for p in re.split(r"\n{2,}", text) if p.strip()]
@@ -133,6 +139,7 @@ class SemanticSplittingStrategy(SplittingStrategy):
         final_paragraphs = self.split_large_paragraphs(processed_paragraphs)
 
         return [p for p in final_paragraphs if len(p) >= MIN_LENGTH]
+
 
     def build_similarity_series(self, paragraphs):
         """Строит ряд схожестей между соседними абзацами"""
@@ -176,41 +183,42 @@ class SemanticSplittingStrategy(SplittingStrategy):
             current_similarity = similarity_series[i]
 
             if i == 0:
-                depth = (
-                    similarity_series[i + 1] - current_similarity
-                    if i + 1 < len(similarity_series)
-                    else 0
-                )
+                left_max = current_similarity
+                right_max = similarity_series[i + 1] if i + 1 < len(similarity_series) else current_similarity
+                death_score = self.calculate_death_score(left_max, right_max, current_similarity)
             elif i == len(similarity_series) - 1:
-                depth = similarity_series[i - 1] - current_similarity
+                left_max = similarity_series[i - 1]
+                right_max = current_similarity
+                death_score = self.calculate_death_score(left_max, right_max, current_similarity)
             else:
-                depth = (
-                    min(similarity_series[i - 1], similarity_series[i + 1])
-                    - current_similarity
-                )
+                left_max = max(similarity_series[i - 1],
+                               similarity_series[i - 2] if i - 2 >= 0 else similarity_series[i - 1])
+                right_max = max(similarity_series[i + 1],
+                                similarity_series[i + 2] if i + 2 < len(similarity_series) else similarity_series[
+                                    i + 1])
+                death_score = self.calculate_death_score(left_max, right_max, current_similarity)
 
-            should_merge = (
-                depth <= 0.15 and current_similarity > self.similarity_threshold
-            )
+            should_merge = (death_score <= 0.15 and current_similarity > self.similarity_threshold)
             merge_decisions.append(should_merge)
 
         return merge_decisions
 
+
     def merge_paragraphs_by_decisions(self, paragraphs, merge_decisions):
-        """Объединяет абзацы на основе решений о слиянии"""
-        processed = []
-        current_group = [paragraphs[0]]
+            """Объединяет абзацы на основе решений о слиянии"""
+            processed = []
+            current_group = [paragraphs[0]]
 
-        for i in range(1, len(paragraphs)):
-            if merge_decisions[i - 1]:
-                current_group.append(paragraphs[i])
-            else:
-                processed.append("\n\n".join(current_group))
-                current_group = [paragraphs[i]]
+            for i in range(1, len(paragraphs)):
+                if merge_decisions[i - 1]:
+                    current_group.append(paragraphs[i])
+                else:
+                    processed.append("\n\n".join(current_group))
+                    current_group = [paragraphs[i]]
 
-        processed.append("\n\n".join(current_group))
+            processed.append("\n\n".join(current_group))
 
-        return processed
+            return processed
 
     def split_into_elements(self, paragraph):
         """Разбивает абзац на элементы (предложения)"""
@@ -266,9 +274,13 @@ class SemanticSplittingStrategy(SplittingStrategy):
         breaks = []
 
         for i in range(1, len(similarities) - 1):
+            left_max = max(similarities[i - 1], similarities[i - 2] if i - 2 >= 0 else similarities[i - 1])
+            right_max = max(similarities[i + 1],
+                            similarities[i + 2] if i + 2 < len(similarities) else similarities[i + 1])
+            death_score = self.calculate_death_score(left_max, right_max, similarities[i])
 
-            depth = min(similarities[i - 1], similarities[i + 1]) - similarities[i]
-            if depth > 0.15 and similarities[i] < self.similarity_threshold:
+            if death_score > 0.15 and similarities[i] < self.similarity_threshold:
                 breaks.append(i)
 
         return breaks
+
