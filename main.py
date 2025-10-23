@@ -51,7 +51,7 @@ def main():
     parser.add_argument(
         "--splitting",
         "-s",
-        default="semantic",
+        default="combined",
         choices=["paragraph", "sentence", "section", "combined", "semantic"],
         help="Стратегия разбиения",
     )
