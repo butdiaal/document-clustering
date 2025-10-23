@@ -2,7 +2,7 @@ import logging
 import os
 import numpy as np
 from collections import Counter
-from metric.metric import ClusteringMetrics
+from metrics.metric import ClusteringMetrics
 from sentence_transformers import SentenceTransformer
 from config import BERT_MODEL_NAME
 

@@ -11,7 +11,7 @@ from strategy.splitting import (
     CombinedSplittingStrategy,
 )
 from strategy.feature import TFIDFStrategy, BERTStrategy
-from metric.analysis import evaluate_results
+from metrics.analysis import evaluate_results
 from strategy.clustering import (
     KMeansClusteringStrategy,
     DBSCANClusteringStrategy,
