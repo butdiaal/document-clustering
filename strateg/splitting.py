@@ -23,13 +23,13 @@ class ParagraphSplittingStrategy(SplittingStrategy):
     def split(self, text):
         """Разбивает текст на абзацы"""
         paragraphs = []
-        raw_paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+        raw_paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
 
         for paragraph in raw_paragraphs:
             if len(paragraph) > MAX_PARAGRAPH_LENGTH:
-                sentences = [s.strip() for s in paragraph.split('.') if s.strip()]
+                sentences = [s.strip() for s in paragraph.split(".") if s.strip()]
                 for i in range(0, len(sentences), 4):
-                    chunk = '. '.join(sentences[i:i + 4]) + '.'
+                    chunk = ". ".join(sentences[i : i + 4]) + "."
                     if len(chunk) >= self.min_length:
                         paragraphs.append(chunk)
             elif len(paragraph) >= self.min_length:
@@ -47,11 +47,11 @@ class SentenceSplittingStrategy(SplittingStrategy):
 
     def split(self, text):
         """Разбивает текст на группы предложений"""
-        sentences = [s.strip() for s in text.split('.') if s.strip()]
+        sentences = [s.strip() for s in text.split(".") if s.strip()]
 
         paragraphs = []
         for i in range(0, len(sentences), self.group_size):
-            chunk = '. '.join(sentences[i:i + self.group_size]) + '.'
+            chunk = ". ".join(sentences[i : i + self.group_size]) + "."
             if len(chunk) >= self.min_length:
                 paragraphs.append(chunk)
 
@@ -63,7 +63,7 @@ class SectionSplittingStrategy(SplittingStrategy):
 
     def split(self, text):
         """Разбивает текст по структурным элементам"""
-        pattern = r'(Статья\s+\d+\.|\d+\.\d+\.|\d+\.\s+[А-Я]|Раздел\s+[IVXLCDM]+)'
+        pattern = r"(Статья\s+\d+\.|\d+\.\d+\.|\d+\.\s+[А-Я]|Раздел\s+[IVXLCDM]+)"
         sections = re.split(pattern, text)
 
         paragraphs = []
@@ -88,17 +88,19 @@ class CombinedSplittingStrategy(SplittingStrategy):
     def split(self, text):
         """Разбивает текст: по абзацам, строкам и предложениям"""
 
-        paragraphs = [p.strip() for p in re.split(r'\n{2,}', text) if p.strip()]
+        paragraphs = [p.strip() for p in re.split(r"\n{2,}", text) if p.strip()]
 
         refined_paragraphs = []
         for paragraph in paragraphs:
             if len(paragraph) > MAX_PARAGRAPH_LENGTH:
-                lines = [line.strip() for line in paragraph.split('\n') if line.strip()]
+                lines = [line.strip() for line in paragraph.split("\n") if line.strip()]
                 for line in lines:
                     if len(line) > MAX_PARAGRAPH_LENGTH:
-                        sentences = [s.strip() + '.' for s in line.split('.') if s.strip()]
+                        sentences = [
+                            s.strip() + "." for s in line.split(".") if s.strip()
+                        ]
                         for i in range(0, len(sentences), SENTENCE_GROUP_SIZE):
-                            chunk = ' '.join(sentences[i:i + SENTENCE_GROUP_SIZE])
+                            chunk = " ".join(sentences[i : i + SENTENCE_GROUP_SIZE])
                             if len(chunk) >= MIN_LENGTH:
                                 refined_paragraphs.append(chunk)
                     elif len(line) >= MIN_LENGTH:
@@ -118,14 +120,16 @@ class SemanticSplittingStrategy(SplittingStrategy):
 
     def split(self, text):
         """Разбивает текст с анализом схожести между соседними абзацами"""
-        raw_paragraphs = [p.strip() for p in re.split(r'\n{2,}', text) if p.strip()]
+        raw_paragraphs = [p.strip() for p in re.split(r"\n{2,}", text) if p.strip()]
 
         if len(raw_paragraphs) <= 1:
             return self.split_large_paragraphs([text])
 
         similarity_series = self.build_similarity_series(raw_paragraphs)
         merge_decisions = self.analyze_similarity_breaks(similarity_series)
-        processed_paragraphs = self.merge_paragraphs_by_decisions(raw_paragraphs, merge_decisions)
+        processed_paragraphs = self.merge_paragraphs_by_decisions(
+            raw_paragraphs, merge_decisions
+        )
         final_paragraphs = self.split_large_paragraphs(processed_paragraphs)
 
         return [p for p in final_paragraphs if len(p) >= MIN_LENGTH]
@@ -148,8 +152,8 @@ class SemanticSplittingStrategy(SplittingStrategy):
             all_elements = prev_elements + curr_elements
             embeddings = self.model.encode(all_elements, normalize_embeddings=True)
 
-            prev_embeddings = embeddings[:len(prev_elements)]
-            curr_embeddings = embeddings[len(prev_elements):]
+            prev_embeddings = embeddings[: len(prev_elements)]
+            curr_embeddings = embeddings[len(prev_elements) :]
 
             max_similarity = 0
             for curr_emb in curr_embeddings:
@@ -172,13 +176,22 @@ class SemanticSplittingStrategy(SplittingStrategy):
             current_similarity = similarity_series[i]
 
             if i == 0:
-                depth = similarity_series[i + 1] - current_similarity if i + 1 < len(similarity_series) else 0
+                depth = (
+                    similarity_series[i + 1] - current_similarity
+                    if i + 1 < len(similarity_series)
+                    else 0
+                )
             elif i == len(similarity_series) - 1:
                 depth = similarity_series[i - 1] - current_similarity
             else:
-                depth = min(similarity_series[i - 1], similarity_series[i + 1]) - current_similarity
+                depth = (
+                    min(similarity_series[i - 1], similarity_series[i + 1])
+                    - current_similarity
+                )
 
-            should_merge = (depth <= 0.15 and current_similarity > self.similarity_threshold)
+            should_merge = (
+                depth <= 0.15 and current_similarity > self.similarity_threshold
+            )
             merge_decisions.append(should_merge)
 
         return merge_decisions
@@ -201,7 +214,7 @@ class SemanticSplittingStrategy(SplittingStrategy):
 
     def split_into_elements(self, paragraph):
         """Разбивает абзац на элементы (предложения)"""
-        sentences = [s.strip() + '.' for s in paragraph.split('.') if s.strip()]
+        sentences = [s.strip() + "." for s in paragraph.split(".") if s.strip()]
         return [s for s in sentences if len(s) > 10]
 
     def split_large_paragraphs(self, paragraphs):
@@ -233,14 +246,14 @@ class SemanticSplittingStrategy(SplittingStrategy):
         start_idx = 0
 
         for split_idx in split_points:
-            fragment_elements = elements[start_idx:split_idx + 1]
+            fragment_elements = elements[start_idx : split_idx + 1]
             if fragment_elements:
-                fragment = ' '.join(fragment_elements)
+                fragment = " ".join(fragment_elements)
                 fragments.append(fragment)
             start_idx = split_idx + 1
 
         if start_idx < len(elements):
-            fragment = ' '.join(elements[start_idx:])
+            fragment = " ".join(elements[start_idx:])
             fragments.append(fragment)
 
         return fragments if fragments else [paragraph]

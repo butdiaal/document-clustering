@@ -21,7 +21,7 @@ class TFIDFStrategy(FeatureStrategy):
             min_df=1,
             max_df=0.8,
             stop_words=None,
-            ngram_range=ngram_range
+            ngram_range=ngram_range,
         )
 
     def transform(self, texts):
@@ -31,7 +31,9 @@ class TFIDFStrategy(FeatureStrategy):
 class BERTStrategy(FeatureStrategy):
     """Стратегия BERT"""
 
-    def __init__(self, model_name='sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'):
+    def __init__(
+        self, model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    ):
         self.model = SentenceTransformer(model_name)
 
     def transform(self, texts):
