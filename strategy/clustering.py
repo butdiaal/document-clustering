@@ -15,6 +15,7 @@ class ClusteringStrategy(ABC):
         """Кластеризует тексты и возвращает метки кластеров"""
         pass
 
+
 #
 # class KMeansClusteringStrategy(ClusteringStrategy):
 #     """Стратегия кластеризации K-Means"""
@@ -67,8 +68,7 @@ class HDBSCANClusteringStrategy(ClusteringStrategy):
             features = features.toarray()
 
         clusterer = self.hdbscan.HDBSCAN(
-            min_cluster_size=self.min_cluster_size,
-            min_samples=self.min_samples
+            min_cluster_size=self.min_cluster_size, min_samples=self.min_samples
         )
         cluster_labels = clusterer.fit_predict(features)
 
@@ -100,7 +100,7 @@ class HierarchicalClusteringStrategy(ClusteringStrategy):
             n_clusters=None,
             distance_threshold=self.distance_threshold,
             linkage=self.linkage,
-            metric='euclidean'
+            metric="euclidean",
         )
 
         cluster_labels = clustering.fit_predict(features)
@@ -120,7 +120,7 @@ class SemanticClusteringStrategy(ClusteringStrategy):
         if len(features) <= 1:
             return [0] * len(features) if features else []
 
-        if hasattr(features, 'shape'):
+        if hasattr(features, "shape"):
             embeddings = features
         else:
             embeddings = self.model.encode(features, normalize_embeddings=True)
@@ -138,7 +138,7 @@ class SemanticClusteringStrategy(ClusteringStrategy):
         if len(sentences_data) < MIN_SENTENCES_PER_CLUSTER:
             return original_paragraphs
 
-        sentences = [data['sentence'] for data in sentences_data]
+        sentences = [data["sentence"] for data in sentences_data]
         cluster_labels = self.cluster(sentences)
 
         cluster_to_paragraphs = {}
@@ -147,7 +147,7 @@ class SemanticClusteringStrategy(ClusteringStrategy):
             if cluster_id == -1:
                 continue
 
-            para_idx = data['para_idx']
+            para_idx = data["para_idx"]
             if cluster_id not in cluster_to_paragraphs:
                 cluster_to_paragraphs[cluster_id] = set()
             cluster_to_paragraphs[cluster_id].add(para_idx)

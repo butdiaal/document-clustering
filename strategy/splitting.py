@@ -104,22 +104,25 @@ class CombinedSplittingStrategy(SplittingStrategy):
             sentences = self._split_into_sentences(paragraph)
             for sentence in sentences:
                 if len(sentence.strip()) > 10:
-                    self.sentences_data.append({
-                        'sentence': sentence,
-                        'para_idx': para_idx,
-                        'para_text': paragraph
-                    })
+                    self.sentences_data.append(
+                        {
+                            "sentence": sentence,
+                            "para_idx": para_idx,
+                            "para_text": paragraph,
+                        }
+                    )
 
         return self.paragraphs
 
     def _split_into_sentences(self, text):
         """Разбивает текст на предложения"""
         sentences = []
-        for sent in text.split('.'):
+        for sent in text.split("."):
             sent = sent.strip()
             if sent and len(sent) > 5:
-                sentences.append(sent + '.')
+                sentences.append(sent + ".")
         return sentences
+
 
 class SemanticSplittingStrategy(SplittingStrategy):
     """Семантическая стратегия разбиения"""
@@ -214,18 +217,20 @@ class SemanticSplittingStrategy(SplittingStrategy):
             left_max = None
             right_max = None
 
-            for j in range(i-1, -1, -1):
+            for j in range(i - 1, -1, -1):
                 if j in maxima_indices:
                     left_max = similarity_series[j]
                     break
 
-            for j in range(i+1, len(similarity_series)):
+            for j in range(i + 1, len(similarity_series)):
                 if j in maxima_indices:
                     right_max = similarity_series[j]
                     break
 
             if left_max is not None and right_max is not None:
-                death_score = self.calculate_death_score(left_max, right_max, current_similarity)
+                death_score = self.calculate_death_score(
+                    left_max, right_max, current_similarity
+                )
                 should_merge = death_score < 0.2
             else:
                 should_merge = current_similarity > self.similarity_threshold
@@ -312,20 +317,21 @@ class SemanticSplittingStrategy(SplittingStrategy):
             left_max = None
             right_max = None
 
-            for j in range(i-1, -1, -1):
+            for j in range(i - 1, -1, -1):
                 if j in maxima_indices:
                     left_max = similarities[j]
                     break
 
-            for j in range(i+1, len(similarities)):
+            for j in range(i + 1, len(similarities)):
                 if j in maxima_indices:
                     right_max = similarities[j]
                     break
 
             if left_max is not None and right_max is not None:
-                death_score = self.calculate_death_score(left_max, right_max, similarities[i])
+                death_score = self.calculate_death_score(
+                    left_max, right_max, similarities[i]
+                )
                 if death_score > 0.2 and similarities[i] < self.similarity_threshold:
                     breaks.append(i)
 
         return breaks
-
