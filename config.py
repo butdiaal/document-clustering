@@ -9,17 +9,18 @@ MIN_LENGTH = int(os.getenv("MIN_LENGTH", 50))
 MAX_PARAGRAPH_LENGTH = int(os.getenv("MAX_PARAGRAPH_LENGTH", 1200))
 SENTENCE_GROUP_SIZE = int(os.getenv("SENTENCE_GROUP_SIZE", 4))
 
-MAX_CLUSTERS = int(os.getenv("MAX_CLUSTERS", 8))
-MIN_CLUSTER_SIZE = int(os.getenv("MIN_CLUSTER_SIZE", 5))
-CLUSTERING_RANDOM_STATE = int(os.getenv("CLUSTERING_RANDOM_STATE", 42))
-
-EPS_DBSCAN = float(os.getenv("EPS_DBSCAN", 0.4))
-MIN_SAMPLES_DBSCAN = int(os.getenv("MIN_SAMPLES_DBSCAN", 3))
 
 HIERARCHICAL_DISTANCE_THRESHOLD = float(
     os.getenv("HIERARCHICAL_DISTANCE_THRESHOLD", 7.0)
 )
 HIERARCHICAL_LINKAGE = os.getenv("HIERARCHICAL_LINKAGE", "ward")
+
+MAX_CLUSTERS = int(os.getenv("MAX_CLUSTERS", 8))
+MIN_CLUSTER_SIZE = int(os.getenv("MIN_CLUSTER_SIZE", 5))
+CLUSTERING_RANDOM_STATE = int(os.getenv("CLUSTERING_RANDOM_STATE", 42))
+
+EPS_DBSCAN = float(os.getenv("EPS_DBSCAN", 0.5))
+MIN_SAMPLES_DBSCAN = int(os.getenv("MIN_SAMPLES_DBSCAN", 4))
 
 BERT_MODEL_NAME = os.getenv(
     "BERT_MODEL_NAME", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
