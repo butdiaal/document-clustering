@@ -83,33 +83,43 @@ class SectionSplittingStrategy(SplittingStrategy):
 
 
 class CombinedSplittingStrategy(SplittingStrategy):
-    """Стратегия разбиения: абзацы - строки - предложения"""
+    """Стратегия разбиения комбинированным методом"""
+
+    def __init__(self, use_clustering=True):
+        self.use_clustering = use_clustering
+        self.sentences_data = []
+        self.paragraphs = []
 
     def split(self, text):
-        """Разбивает текст: по абзацам, строкам и предложениям"""
+        """Разбивает текст на абзацы"""
 
-        paragraphs = [p.strip() for p in re.split(r"\n{2,}", text) if p.strip()]
+        self.paragraphs = [p.strip() for p in re.split(r"\n{2,}", text) if p.strip()]
 
-        refined_paragraphs = []
-        for paragraph in paragraphs:
-            if len(paragraph) > MAX_PARAGRAPH_LENGTH:
-                lines = [line.strip() for line in paragraph.split("\n") if line.strip()]
-                for line in lines:
-                    if len(line) > MAX_PARAGRAPH_LENGTH:
-                        sentences = [
-                            s.strip() + "." for s in line.split(".") if s.strip()
-                        ]
-                        for i in range(0, len(sentences), SENTENCE_GROUP_SIZE):
-                            chunk = " ".join(sentences[i : i + SENTENCE_GROUP_SIZE])
-                            if len(chunk) >= MIN_LENGTH:
-                                refined_paragraphs.append(chunk)
-                    elif len(line) >= MIN_LENGTH:
-                        refined_paragraphs.append(line)
-            elif len(paragraph) >= MIN_LENGTH:
-                refined_paragraphs.append(paragraph)
+        if len(self.paragraphs) <= 1:
+            return self.paragraphs
 
-        return refined_paragraphs if refined_paragraphs else [text]
+        self.sentences_data = []
 
+        for para_idx, paragraph in enumerate(self.paragraphs):
+            sentences = self._split_into_sentences(paragraph)
+            for sentence in sentences:
+                if len(sentence.strip()) > 10:
+                    self.sentences_data.append({
+                        'sentence': sentence,
+                        'para_idx': para_idx,
+                        'para_text': paragraph
+                    })
+
+        return self.paragraphs
+
+    def _split_into_sentences(self, text):
+        """Разбивает текст на предложения"""
+        sentences = []
+        for sent in text.split('.'):
+            sent = sent.strip()
+            if sent and len(sent) > 5:
+                sentences.append(sent + '.')
+        return sentences
 
 class SemanticSplittingStrategy(SplittingStrategy):
     """Семантическая стратегия разбиения"""

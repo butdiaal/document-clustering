@@ -13,8 +13,8 @@ from strategy.splitting import (
 from strategy.feature import TFIDFStrategy, BERTStrategy
 from metrics.test import evaluate_results
 from strategy.clustering import (
-    KMeansClusteringStrategy,
     DBSCANClusteringStrategy,
+    HDBSCANClusteringStrategy,
     HierarchicalClusteringStrategy,
     SemanticClusteringStrategy,
 )
@@ -66,7 +66,7 @@ def main():
         "--clustering",
         "-c",
         default="semantic",
-        choices=["kmeans", "dbscan", "hierarchical", "semantic"],
+        choices=["dbscan", "hdbscan", "hierarchical", "semantic"],
         help="Стратегия кластеризации",
     )
 
@@ -76,7 +76,7 @@ def main():
         if args.features == "tfidf":
             logging.warning("Для комбинированного разбиения признак 'bert'")
             args.features = "bert"
-        if args.clustering == "kmeans":
+        if args.clustering == "hierarchical":
             logging.warning("Для комбинированного разбиения кластеризация 'semantic'")
             args.clustering = "semantic"
 
@@ -104,10 +104,10 @@ def main():
     elif args.features == "bert":
         feature_strategy = BERTStrategy()
 
-    if args.clustering == "kmeans":
-        clustering_strategy = KMeansClusteringStrategy()
-    elif args.clustering == "dbscan":
+    if args.clustering == "dbscan":
         clustering_strategy = DBSCANClusteringStrategy()
+    elif args.clustering == "hdbscan":
+        clustering_strategy = HDBSCANClusteringStrategy()
     elif args.clustering == "hierarchical":
         clustering_strategy = HierarchicalClusteringStrategy()
     elif args.clustering == "semantic":
