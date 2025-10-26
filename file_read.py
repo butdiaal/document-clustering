@@ -59,25 +59,37 @@ def process_all_documents(
 def process_combined(texts, filenames, splitting_strategy, feature_strategy, clustering_strategy):
     """Обработка для комбинированного метода"""
 
-    clustered_data = defaultdict(list)
-    total_fragments = 0
+    all_paragraphs = []
+    all_sentences_data = []
+    paragraph_to_file = {}
 
     for text, filename in zip(texts, filenames):
-        paragraph_all, sentence_all = splitting_strategy.split(text)
+        paragraphs, sentences_data = splitting_strategy.split(text)
 
-        meta_paragraphs = clustering_strategy.cluster_paragraphs_sentences(paragraph_all, sentence_all)
+        for para_idx, paragraph in enumerate(paragraphs):
+            all_paragraphs.append(paragraph)
+            paragraph_to_file[len(all_paragraphs) - 1] = filename
 
-        if meta_paragraphs:
-            features = feature_strategy.transform(meta_paragraphs)
+        for sent_data in sentences_data:
+            sent_data["source_file"] = filename
+            all_sentences_data.append(sent_data)
 
-            cluster_labels = clustering_strategy.cluster(features)
+    final_paragraphs = clustering_strategy.cluster_paragraphs_sentences(all_paragraphs, all_sentences_data)
 
-            for i, (meta_para, cluster_id) in enumerate(zip(meta_paragraphs, cluster_labels)):
-                clustered_data[cluster_id].append({
-                    "text": meta_para,
-                    "source": filename,
-                    "fragment_id": total_fragments
-                })
-                total_fragments += 1
+    clustered_data = defaultdict(list)
 
-    return clustered_data, total_fragments
+    for i, meta_para in enumerate(final_paragraphs):
+        source_files = set()
+
+        for para_idx, original_para in enumerate(all_paragraphs):
+            if original_para in meta_para:
+                source_files.add(paragraph_to_file[para_idx])
+
+        for source_file in source_files:
+            clustered_data[i].append({
+                "text": meta_para,
+                "source": source_file,
+                "fragment_id": i
+            })
+
+    return clustered_data, len(final_paragraphs)
