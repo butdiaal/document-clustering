@@ -91,12 +91,6 @@ def main():
         splitting_strategy = CombinedSplittingStrategy()
         feature_strategy = BERTStrategy()
 
-        class DummyClusteringStrategy:
-            def cluster(self, features):
-                return [0] * len(features)
-
-        clustering_strategy = DummyClusteringStrategy()
-
         clustered_data, total_fragments = process_combined(
             texts, filenames, splitting_strategy, feature_strategy
         )
