@@ -25,8 +25,11 @@ MIN_SAMPLES_DBSCAN = int(os.getenv("MIN_SAMPLES_DBSCAN", 1))
 EPS_HDBSCAN = float(os.getenv("EPS_HDBSCAN", 0.6))
 MIN_SAMPLES_HDBSCAN = int(os.getenv("MIN_SAMPLES_HDBSCAN", 2))
 
-EPS_COMBINED = float(os.getenv("EPS_COMBINED", 0.4))
-MIN_SAMPLES_COMBINED = int(os.getenv("MIN_SAMPLES_COMBINED", 3))
+EPS_COMBINED_DBSCAN = float(os.getenv("EPS_COMBINED_DBSCAN", 0.7))
+MIN_SAMPLES_COMBINED_DBSCAN = int(os.getenv("MIN_SAMPLES_COMBINED_DBSCAN", 2))
+
+EPS_COMBINED = float(os.getenv("EPS_COMBINED", 0.6))
+MIN_SAMPLES_COMBINED = int(os.getenv("MIN_SAMPLES_COMBINED", 2))
 BERT_MODEL_NAME = os.getenv(
     "BERT_MODEL_NAME", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 )

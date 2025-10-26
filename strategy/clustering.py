@@ -116,8 +116,8 @@ class SemanticClusteringStrategy(ClusteringStrategy):
     def __init__(self, eps=None, min_samples=None, model_name=BERT_MODEL_NAME):
         self.eps = eps or EPS_COMBINED
         self.min_samples = min_samples or MIN_SAMPLES_COMBINED
-        self.eps_d = eps or EPS_DBSCAN
-        self.min_samples_d = min_samples or MIN_SAMPLES_DBSCAN
+        self.eps_d = eps or EPS_COMBINED_DBSCAN
+        self.min_samples_d = min_samples or MIN_SAMPLES_COMBINED_DBSCAN
         self.model = SentenceTransformer(model_name)
 
     def cluster(self, features):
@@ -135,10 +135,10 @@ class SemanticClusteringStrategy(ClusteringStrategy):
 
         return cluster_labels
 
-    def cluster_paragraphs_via_sentences(self, splitting_strategy):
+    def cluster_paragraphs_sentences(self, original_paragraphs, original_sentences):
         """Группировка абзацев через кластеризацию предложений"""
-        sentences_data = splitting_strategy.sentences_data
-        original_paragraphs = splitting_strategy.paragraphs
+        sentences_data = original_sentences
+        original_paragraphs = original_paragraphs
 
         if len(sentences_data) < MIN_SENTENCES_PER_CLUSTER:
             return original_paragraphs

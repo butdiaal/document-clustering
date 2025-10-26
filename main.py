@@ -90,9 +90,9 @@ def main():
     if args.splitting == "combined":
         splitting_strategy = CombinedSplittingStrategy()
         feature_strategy = BERTStrategy()
-
+        clustering_strategy = SemanticClusteringStrategy()
         clustered_data, total_fragments = process_combined(
-            texts, filenames, splitting_strategy, feature_strategy
+            texts, filenames, splitting_strategy, feature_strategy, clustering_strategy
         )
     else:
         if args.splitting == "paragraph":

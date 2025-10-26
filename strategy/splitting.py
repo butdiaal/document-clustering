@@ -113,7 +113,7 @@ class CombinedSplittingStrategy(SplittingStrategy):
                         }
                     )
 
-        return self.paragraphs
+        return self.paragraphs, self.sentences_data
 
     def _split_into_sentences(self, text):
         """Разбивает текст на предложения"""
