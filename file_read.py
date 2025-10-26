@@ -1,5 +1,6 @@
 import os
 from collections import defaultdict
+import numpy as np
 from strategy.clustering import DBSCANClusteringStrategy
 
 
@@ -55,24 +56,21 @@ def process_all_documents(
     return clustered_data, len(all_fragments)
 
 
-def process_combined(texts, filenames, splitting_strategy, feature_strategy):
+def process_combined(texts, filenames, splitting_strategy, feature_strategy, clustering_strategy):
     """Обработка для комбинированного метода"""
-
-    from strategy.clustering import SemanticClusteringStrategy
 
     clustered_data = defaultdict(list)
     total_fragments = 0
-    semantic_cluster = SemanticClusteringStrategy()
 
     for text, filename in zip(texts, filenames):
-        splitting_strategy.split(text)
+        paragraph_all, sentence_all = splitting_strategy.split(text)
 
-        meta_paragraphs = semantic_cluster.cluster_paragraphs_via_sentences(splitting_strategy)
+        meta_paragraphs = clustering_strategy.cluster_paragraphs_sentences(paragraph_all, sentence_all)
 
         if meta_paragraphs:
-            paragraph_cluster = DBSCANClusteringStrategy()
             features = feature_strategy.transform(meta_paragraphs)
-            cluster_labels = paragraph_cluster.cluster(features)
+
+            cluster_labels = clustering_strategy.cluster(features)
 
             for i, (meta_para, cluster_id) in enumerate(zip(meta_paragraphs, cluster_labels)):
                 clustered_data[cluster_id].append({
