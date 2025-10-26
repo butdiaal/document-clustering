@@ -19,9 +19,14 @@ MAX_CLUSTERS = int(os.getenv("MAX_CLUSTERS", 8))
 MIN_CLUSTER_SIZE = int(os.getenv("MIN_CLUSTER_SIZE", 5))
 CLUSTERING_RANDOM_STATE = int(os.getenv("CLUSTERING_RANDOM_STATE", 42))
 
-EPS_DBSCAN = float(os.getenv("EPS_DBSCAN", 0.5))
-MIN_SAMPLES_DBSCAN = int(os.getenv("MIN_SAMPLES_DBSCAN", 4))
+EPS_DBSCAN = float(os.getenv("EPS_DBSCAN", 0.4))
+MIN_SAMPLES_DBSCAN = int(os.getenv("MIN_SAMPLES_DBSCAN", 1))
 
+EPS_HDBSCAN = float(os.getenv("EPS_HDBSCAN", 0.6))
+MIN_SAMPLES_HDBSCAN = int(os.getenv("MIN_SAMPLES_HDBSCAN", 2))
+
+EPS_COMBINED = float(os.getenv("EPS_COMBINED", 0.4))
+MIN_SAMPLES_COMBINED = int(os.getenv("MIN_SAMPLES_COMBINED", 3))
 BERT_MODEL_NAME = os.getenv(
     "BERT_MODEL_NAME", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 )

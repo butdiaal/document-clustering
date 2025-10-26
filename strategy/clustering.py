@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
+
 from sklearn.cluster import DBSCAN, AgglomerativeClustering
 from sklearn.preprocessing import StandardScaler
 from config import *
@@ -104,6 +106,7 @@ class HierarchicalClusteringStrategy(ClusteringStrategy):
         )
 
         cluster_labels = clustering.fit_predict(features)
+        print(cluster_labels)
         return cluster_labels
 
 
@@ -111,8 +114,10 @@ class SemanticClusteringStrategy(ClusteringStrategy):
     """Семантическая кластеризация для создания мета-абзацев через предложения"""
 
     def __init__(self, eps=None, min_samples=None, model_name=BERT_MODEL_NAME):
-        self.eps = eps or EPS_DBSCAN
-        self.min_samples = min_samples or MIN_SAMPLES_DBSCAN
+        self.eps = eps or EPS_COMBINED
+        self.min_samples = min_samples or MIN_SAMPLES_COMBINED
+        self.eps_d = eps or EPS_DBSCAN
+        self.min_samples_d = min_samples or MIN_SAMPLES_DBSCAN
         self.model = SentenceTransformer(model_name)
 
     def cluster(self, features):
@@ -125,7 +130,7 @@ class SemanticClusteringStrategy(ClusteringStrategy):
         else:
             embeddings = self.model.encode(features, normalize_embeddings=True)
 
-        dbscan = DBSCAN(eps=self.eps, min_samples=self.min_samples)
+        dbscan = DBSCAN(eps=self.eps_d, min_samples=self.min_samples_d)
         cluster_labels = dbscan.fit_predict(embeddings)
 
         return cluster_labels

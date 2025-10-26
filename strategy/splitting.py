@@ -3,6 +3,7 @@ import re
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from config import *
+from strategy.clustering import SemanticClusteringStrategy
 
 
 class SplittingStrategy(ABC):

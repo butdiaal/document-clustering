@@ -91,8 +91,7 @@ def evaluate_results(
 ):
     """Оценка результатов кластеризации"""
 
-    theme_folders = [f for f in os.listdir(output_dir) if f.startswith("topic_")]
-    algorithm_themes = len(theme_folders)
+    algorithm_themes = len(clustered_data)
 
     all_fragments_list = []
     all_labels = []
@@ -107,10 +106,13 @@ def evaluate_results(
     logging.info(f"Алгоритм создал тем: {algorithm_themes}")
     logging.info(f"Всего фрагментов: {total_fragments}")
 
-    for cluster_id, fragments in clustered_data.items():
+    sorted_clusters = sorted(clustered_data.items(), key=lambda x: x[0])
+
+    for cluster_id, fragments in sorted_clusters:
         sources = Counter([f["source"] for f in fragments])
+        display_id = cluster_id if cluster_id >= 0 else f"single_{abs(cluster_id)}"
         logging.info(
-            f"Тема {cluster_id + 1}: {len(fragments)} фрагментов из {len(sources)} документов"
+            f"Тема {display_id}: {len(fragments)} фрагментов из {len(sources)} документов"
         )
 
     if all_fragments_list and feature_strategy:
@@ -140,8 +142,9 @@ def evaluate_results(
         logging.info(f"Ожидаемое количество тем: {expected_themes}")
 
         for cluster_id, match_info in matches.items():
+            display_id = cluster_id if cluster_id >= 0 else f"single_{abs(cluster_id)}"
             logging.info(
-                f" Кластер {cluster_id + 1} - {match_info['theme_name']} (схожесть: {match_info['similarity']:.3f})"
+                f" Кластер {display_id} - {match_info['theme_name']} (схожесть: {match_info['similarity']:.3f})"
             )
 
         coverage_ratio = len(matches) / expected_themes if expected_themes > 0 else 0
@@ -150,17 +153,17 @@ def evaluate_results(
         elif coverage_ratio >= 0.5:
             logging.info(f"Умеренное покрытие эталона: {coverage_ratio:.1%}")
         else:
-            logging.warning(f"Низкое покрытие эталона: {coverage_ratio:.1%}")
+            logging.info(f"Низкое покрытие эталона: {coverage_ratio:.1%}")
 
         expected_range = (expected_themes - 2, expected_themes + 3)
         if expected_range[0] <= algorithm_themes <= expected_range[1]:
             logging.info(f"Количество тем соответствует ожидаемому ({expected_themes})")
         elif algorithm_themes < expected_range[0]:
-            logging.warning(
+            logging.info(
                 f"Слишком мало тем ({algorithm_themes} вместо {expected_themes})"
             )
         else:
-            logging.warning(
+            logging.info(
                 f"Слишком много тем ({algorithm_themes} вместо {expected_themes})"
             )
     else:
@@ -179,9 +182,9 @@ def _evaluate_by_metrics(metrics_results, n_clusters):
     elif silhouette > 0.25:
         logging.info(f"Удовлетворительный силуэтный скор: {silhouette:.3f}")
     elif silhouette >= 0:
-        logging.warning(f"Слабый силуэтный скор: {silhouette:.3f}")
+        logging.info(f"Слабый силуэтный скор: {silhouette:.3f}")
     else:
-        logging.warning("Не удалось рассчитать силуэтный скор")
+        logging.info("Не удалось рассчитать силуэтный скор")
 
     db_score = internal_metrics.get("davies_bouldin_score", float("inf"))
     if db_score < 0.7:
@@ -189,9 +192,9 @@ def _evaluate_by_metrics(metrics_results, n_clusters):
     elif db_score < 1.0:
         logging.info(f"Удовлетворительный Davies-Bouldin: {db_score:.3f}")
     elif db_score < float("inf"):
-        logging.warning(f"Слабый Davies-Bouldin: {db_score:.3f}")
+        logging.info(f"Слабый Davies-Bouldin: {db_score:.3f}")
     else:
-        logging.warning("Не удалось рассчитать Davies-Bouldin")
+        logging.info("Не удалось рассчитать Davies-Bouldin")
 
     cv = cluster_stats.get("cluster_size_cv", 1)
     if cv < 0.5:
@@ -199,14 +202,14 @@ def _evaluate_by_metrics(metrics_results, n_clusters):
     elif cv < 1.0:
         logging.info(f"Умеренная сбалансированность кластеров (CV: {cv:.3f})")
     else:
-        logging.warning(f"Несбалансированные кластеры (CV: {cv:.3f})")
+        logging.info(f"Несбалансированные кластеры (CV: {cv:.3f})")
 
     if silhouette > 0.3 and db_score < 1.0 and cv < 1.0:
-        logging.info("✓ Общее качество кластеризации: хорошее")
+        logging.info("Общее качество кластеризации: хорошее")
     elif silhouette > 0.1 and db_score < 1.5:
         logging.info("Общее качество кластеризации: удовлетворительное")
     else:
-        logging.warning("Общее качество кластеризации: низкое")
+        logging.info("Общее качество кластеризации: низкое")
 
 
 def analyze_cluster_quality(clustered_data):

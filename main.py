@@ -2,7 +2,7 @@ import os
 import argparse
 import logging
 from collections import defaultdict
-from file_read import read_all_files, process_all_documents
+from file_read import read_all_files, process_all_documents, process_combined
 from strategy.splitting import (
     ParagraphSplittingStrategy,
     SentenceSplittingStrategy,
@@ -18,7 +18,6 @@ from strategy.clustering import (
     HierarchicalClusteringStrategy,
     SemanticClusteringStrategy,
 )
-
 
 def save_clustered_paragraphs(clustered_data, output_dir):
     """Сохранение абзацев по тематикам"""
@@ -88,44 +87,58 @@ def main():
     os.makedirs(args.output, exist_ok=True)
     texts, filenames = read_all_files(args.input)
 
-    if args.splitting == "paragraph":
-        splitting_strategy = ParagraphSplittingStrategy()
-    elif args.splitting == "sentence":
-        splitting_strategy = SentenceSplittingStrategy()
-    elif args.splitting == "section":
-        splitting_strategy = SectionSplittingStrategy()
-    elif args.splitting == "combined":
+    if args.splitting == "combined":
         splitting_strategy = CombinedSplittingStrategy()
-    elif args.splitting == "semantic":
-        splitting_strategy = SemanticSplittingStrategy()
-
-    if args.features == "tfidf":
-        feature_strategy = TFIDFStrategy()
-    elif args.features == "bert":
         feature_strategy = BERTStrategy()
 
-    if args.clustering == "dbscan":
-        clustering_strategy = DBSCANClusteringStrategy()
-    elif args.clustering == "hdbscan":
-        clustering_strategy = HDBSCANClusteringStrategy()
-    elif args.clustering == "hierarchical":
-        clustering_strategy = HierarchicalClusteringStrategy()
-    elif args.clustering == "semantic":
-        clustering_strategy = SemanticClusteringStrategy()
+        class DummyClusteringStrategy:
+            def cluster(self, features):
+                return [0] * len(features)
 
-    if not texts:
-        return
+        clustering_strategy = DummyClusteringStrategy()
 
-    clustered_data, total_fragments = process_all_documents(
-        texts, filenames, splitting_strategy, feature_strategy, clustering_strategy
-    )
+        clustered_data, total_fragments = process_combined(
+            texts, filenames, splitting_strategy, feature_strategy
+        )
+    else:
+        if args.splitting == "paragraph":
+            splitting_strategy = ParagraphSplittingStrategy()
+        elif args.splitting == "sentence":
+            splitting_strategy = SentenceSplittingStrategy()
+        elif args.splitting == "section":
+            splitting_strategy = SectionSplittingStrategy()
+        elif args.splitting == "semantic":
+            splitting_strategy = SemanticSplittingStrategy()
+
+        if args.features == "tfidf":
+            feature_strategy = TFIDFStrategy()
+        elif args.features == "bert":
+            feature_strategy = BERTStrategy()
+
+        if args.clustering == "dbscan":
+            clustering_strategy = DBSCANClusteringStrategy(eps=args.eps, min_samples=args.min_samples)
+        elif args.clustering == "hdbscan":
+            clustering_strategy = HDBSCANClusteringStrategy()
+        elif args.clustering == "hierarchical":
+            clustering_strategy = HierarchicalClusteringStrategy()
+        elif args.clustering == "semantic":
+            clustering_strategy = SemanticClusteringStrategy(eps=args.eps, min_samples=args.min_samples)
+
+        clustered_data, total_fragments = process_all_documents(
+            texts, filenames, splitting_strategy, feature_strategy, clustering_strategy
+        )
 
     save_clustered_paragraphs(clustered_data, args.output)
-    evaluate_results(clustered_data, args.output)
+    # evaluate_results(clustered_data, args.output)
 
 
 if __name__ == "__main__":
+    logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
+    logging.getLogger("transformers").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
     logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+        level=logging.INFO,
+        format="%(message)s"
     )
     main()
