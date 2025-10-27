@@ -134,10 +134,10 @@ class SemanticClusteringStrategy(ClusteringStrategy):
 
         return cluster_labels
 
-    def cluster_paragraphs_sentences(self, original_paragraphs, original_sentences):
+    def cluster_paragraphs_sentences(self, all_paragraphs, all_sentences_data):
         """Группировка абзацев через кластеризацию предложений"""
-        sentences_data = original_sentences
-        original_paragraphs = original_paragraphs
+        sentences_data = all_sentences_data
+        original_paragraphs = all_paragraphs
 
         if len(sentences_data) < MIN_SENTENCES_PER_CLUSTER:
             return original_paragraphs
@@ -145,7 +145,7 @@ class SemanticClusteringStrategy(ClusteringStrategy):
         sentences = [data["sentence"] for data in sentences_data]
         cluster_labels = self.cluster(sentences)
 
-        cluster_to_paragraphs = {}
+        cluster_to_paragraphs = defaultdict(set)
 
         for data, cluster_id in zip(sentences_data, cluster_labels):
             if cluster_id == -1:
@@ -166,25 +166,23 @@ class SemanticClusteringStrategy(ClusteringStrategy):
 
         used_paragraphs = set()
         final_paragraphs = []
-        paragraph_mapping = {}
 
         for cluster_id, para_indices in valid_clusters.items():
             cluster_paragraphs = []
-            used_in_this_cluster = set()
             for para_idx in sorted(para_indices):
                 if para_idx not in used_paragraphs:
-                    cluster_paragraphs.append(original_paragraphs[para_idx])
-                    used_in_this_cluster.add(para_idx)
-                    used_paragraphs.add(para_idx)
+                    paragraph_text = all_paragraphs[para_idx]
+                    if len(paragraph_text.strip()) >= MIN_LENGTH:
+                        cluster_paragraphs.append(paragraph_text)
+                        used_paragraphs.add(para_idx)
 
             if cluster_paragraphs:
                 meta_paragraph = "\n\n".join(cluster_paragraphs)
                 if len(meta_paragraph) >= MIN_LENGTH:
                     final_paragraphs.append(meta_paragraph)
-                    paragraph_mapping[len(final_paragraphs) - 1] = used_in_this_cluster
 
         for para_idx, paragraph in enumerate(original_paragraphs):
             if para_idx not in used_paragraphs and len(paragraph) >= MIN_LENGTH:
                 final_paragraphs.append(paragraph)
 
-        return final_paragraphs, paragraph_mapping
+        return final_paragraphs
