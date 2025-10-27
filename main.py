@@ -123,7 +123,7 @@ def main():
         )
 
     save_clustered_paragraphs(clustered_data, args.output)
-    # evaluate_results(clustered_data, args.output)
+    evaluate_results(clustered_data, args.output)
 
 
 if __name__ == "__main__":

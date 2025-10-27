@@ -57,39 +57,52 @@ def process_all_documents(
 
 
 def process_combined(texts, filenames, splitting_strategy, feature_strategy, clustering_strategy):
-    """Обработка для комбинированного метода"""
+    """Исправленная обработка для комбинированного метода"""
 
     all_paragraphs = []
     all_sentences_data = []
-    paragraph_to_file = {}
+    paragraph_info = []
 
     for text, filename in zip(texts, filenames):
         paragraphs, sentences_data = splitting_strategy.split(text)
 
         for para_idx, paragraph in enumerate(paragraphs):
             all_paragraphs.append(paragraph)
-            paragraph_to_file[len(all_paragraphs) - 1] = filename
+            paragraph_info.append({
+                "text": paragraph,
+                "source": filename,
+                "global_idx": len(all_paragraphs) - 1
+            })
 
         for sent_data in sentences_data:
             sent_data["source_file"] = filename
             all_sentences_data.append(sent_data)
 
-    final_paragraphs = clustering_strategy.cluster_paragraphs_sentences(all_paragraphs, all_sentences_data)
+    final_paragraphs, paragraph_mapping = clustering_strategy.cluster_paragraphs_sentences(
+        all_paragraphs, all_sentences_data
+    )
+
+    if final_paragraphs:
+        features = feature_strategy.transform(final_paragraphs)
+        cluster_labels = clustering_strategy.cluster(features)
+    else:
+        cluster_labels = []
 
     clustered_data = defaultdict(list)
 
-    for i, meta_para in enumerate(final_paragraphs):
-        source_files = set()
+    for i, (meta_para, cluster_id) in enumerate(zip(final_paragraphs, cluster_labels)):
+        if i in paragraph_mapping:
+            source_files = set()
 
-        for para_idx, original_para in enumerate(all_paragraphs):
-            if original_para in meta_para:
-                source_files.add(paragraph_to_file[para_idx])
+            for para_idx in paragraph_mapping[i]:
+                if para_idx < len(paragraph_info):
+                    source_files.add(paragraph_info[para_idx]["source"])
 
-        for source_file in source_files:
-            clustered_data[i].append({
-                "text": meta_para,
-                "source": source_file,
-                "fragment_id": i
-            })
+            for source_file in source_files:
+                clustered_data[cluster_id].append({
+                    "text": meta_para,
+                    "source": source_file,
+                    "fragment_id": i
+                })
 
     return clustered_data, len(final_paragraphs)

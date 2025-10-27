@@ -1,5 +1,4 @@
 import logging
-import os
 import numpy as np
 from collections import Counter
 from metrics.metric import ClusteringMetrics
@@ -7,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 from config import BERT_MODEL_NAME
 
 try:
-    from data.manual_labeling import (
+    from metrics.manual_labeling import (
         reference_labels,
         theme_names,
         get_reference_mapping,
