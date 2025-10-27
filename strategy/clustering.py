@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
-from sklearn.cluster import DBSCAN, AgglomerativeClustering
+from sklearn.cluster import DBSCAN, AgglomerativeClustering, HDBSCAN
 from sklearn.preprocessing import StandardScaler
 from config import *
-import numpy as np
-import hdbscan
 from sentence_transformers import SentenceTransformer
 
 
@@ -60,7 +58,7 @@ class HDBSCANClusteringStrategy(ClusteringStrategy):
     """Плотностная кластеризация HDBSCAN"""
 
     def __init__(self, min_cluster_size=None, min_samples=None):
-        self.hdbscan = hdbscan
+        self.hdbscan = None
         self.min_cluster_size = min_cluster_size or MIN_CLUSTER_SIZE
         self.min_samples = min_samples or MIN_SAMPLES_DBSCAN
 
