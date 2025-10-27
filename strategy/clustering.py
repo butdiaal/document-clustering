@@ -48,7 +48,7 @@ class DBSCANClusteringStrategy(ClusteringStrategy):
         if hasattr(features, "toarray"):
             features = features.toarray()
 
-        dbscan = DBSCAN(eps=self.eps, min_samples=self.min_samples)
+        dbscan = DBSCAN(eps=self.eps, min_samples=self.min_samples, metric="cosine")
         cluster_labels = dbscan.fit_predict(features)
 
         return cluster_labels
@@ -68,7 +68,9 @@ class HDBSCANClusteringStrategy(ClusteringStrategy):
             features = features.toarray()
 
         clusterer = self.hdbscan.HDBSCAN(
-            min_cluster_size=self.min_cluster_size, min_samples=self.min_samples
+            min_cluster_size=self.min_cluster_size,
+            min_samples=self.min_samples,
+            metric="cosine",
         )
         cluster_labels = clusterer.fit_predict(features)
 

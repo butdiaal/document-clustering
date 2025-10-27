@@ -1,7 +1,33 @@
 import os
 from collections import defaultdict
-import numpy as np
-from strategy.clustering import DBSCANClusteringStrategy
+
+
+def save_clustered_paragraphs(clustered_data, output_dir):
+    """Сохранение абзацев по тематикам"""
+
+    import os
+    from collections import defaultdict
+
+    documents_themes = defaultdict(lambda: defaultdict(list))
+
+    for cluster_id, paragraphs_data in clustered_data.items():
+        for para_data in paragraphs_data:
+            source_file = para_data["source"]
+            theme_id = cluster_id
+            documents_themes[source_file][theme_id].append(para_data["text"])
+
+    for doc_index, (filename, themes_data) in enumerate(documents_themes.items(), 1):
+        doc_folder_name = f"{filename.replace('.txt', '')}"
+        doc_folder = os.path.join(output_dir, doc_folder_name)
+        os.makedirs(doc_folder, exist_ok=True)
+
+        for theme_index, (theme_id, theme_texts) in enumerate(themes_data.items(), 1):
+            theme_file = os.path.join(doc_folder, f"theme_{theme_index:02d}.txt")
+
+            with open(theme_file, "w", encoding="utf-8") as f:
+                for text in theme_texts:
+                    f.write(text)
+                    f.write("\n\n")
 
 
 def read_all_files(input_dir):
@@ -34,75 +60,82 @@ def extract_paragraphs(texts, filenames, splitting_strategy):
 
 
 def process_all_documents(
-    texts, filenames, splitting_strategy, feature_strategy, clustering_strategy
+    texts,
+    filenames,
+    splitting_strategy,
+    feature_strategy,
+    clustering_strategy,
+    output_dir,
 ):
     """Обработка всех документов"""
 
-    all_fragments, fragment_sources = extract_paragraphs(
-        texts, filenames, splitting_strategy
-    )
-
-    features = feature_strategy.transform(all_fragments)
-    cluster_labels = clustering_strategy.cluster(features)
-
-    clustered_data = defaultdict(list)
-    for i, (fragment, source, cluster_id) in enumerate(
-        zip(all_fragments, fragment_sources, cluster_labels)
-    ):
-        clustered_data[cluster_id].append(
-            {"text": fragment, "source": source, "fragment_id": i}
-        )
-
-    return clustered_data, len(all_fragments)
-
-
-def process_combined(texts, filenames, splitting_strategy, feature_strategy, clustering_strategy):
-    """Исправленная обработка для комбинированного метода"""
-
-    all_paragraphs = []
-    all_sentences_data = []
-    paragraph_info = []
+    total_fragments = 0
 
     for text, filename in zip(texts, filenames):
-        paragraphs, sentences_data = splitting_strategy.split(text)
+        doc_clustered_data = defaultdict(list)
+        doc_fragments_count = 0
 
-        for para_idx, paragraph in enumerate(paragraphs):
-            all_paragraphs.append(paragraph)
-            paragraph_info.append({
-                "text": paragraph,
-                "source": filename,
-                "global_idx": len(all_paragraphs) - 1
-            })
+        fragments = splitting_strategy.split(text)
+
+        if len(fragments) <= 1:
+            cluster_id = f"{filename}_0"
+            for i, fragment in enumerate(fragments):
+                doc_clustered_data[cluster_id].append(
+                    {"text": fragment, "source": filename, "fragment_id": i}
+                )
+            doc_fragments_count = len(fragments)
+        else:
+            features = feature_strategy.transform(fragments)
+            cluster_labels = clustering_strategy.cluster(features)
+
+            for i, (fragment, cluster_id) in enumerate(zip(fragments, cluster_labels)):
+                global_cluster_id = f"{filename}_{cluster_id}"
+                doc_clustered_data[global_cluster_id].append(
+                    {"text": fragment, "source": filename, "fragment_id": i}
+                )
+            doc_fragments_count = len(fragments)
+
+        save_clustered_paragraphs(doc_clustered_data, output_dir)
+
+        total_fragments += doc_fragments_count
+
+    return defaultdict(list), total_fragments
+
+
+def process_combined(
+    texts,
+    filenames,
+    splitting_strategy,
+    feature_strategy,
+    clustering_strategy,
+    output_dir,
+):
+    """Обработка для комбинированного метода"""
+
+    total_fragments = 0
+
+    for text, filename in zip(texts, filenames):
+        doc_clustered_data = defaultdict(list)
+        doc_fragments_count = 0
+
+        paragraphs, sentences_data = splitting_strategy.split(text)
 
         for sent_data in sentences_data:
             sent_data["source_file"] = filename
-            all_sentences_data.append(sent_data)
 
-    final_paragraphs, paragraph_mapping = clustering_strategy.cluster_paragraphs_sentences(
-        all_paragraphs, all_sentences_data
-    )
+        final_paragraphs = clustering_strategy.cluster_paragraphs_sentences(
+            paragraphs, sentences_data
+        )
 
-    if final_paragraphs:
-        features = feature_strategy.transform(final_paragraphs)
-        cluster_labels = clustering_strategy.cluster(features)
-    else:
-        cluster_labels = []
+        for i, meta_para in enumerate(final_paragraphs):
+            cluster_id = i
+            doc_clustered_data[cluster_id].append(
+                {"text": meta_para, "source": filename, "fragment_id": i}
+            )
+            doc_fragments_count += 1
 
-    clustered_data = defaultdict(list)
+        save_clustered_paragraphs(doc_clustered_data, output_dir)
 
-    for i, (meta_para, cluster_id) in enumerate(zip(final_paragraphs, cluster_labels)):
-        if i in paragraph_mapping:
-            source_files = set()
+        total_fragments += doc_fragments_count
 
-            for para_idx in paragraph_mapping[i]:
-                if para_idx < len(paragraph_info):
-                    source_files.add(paragraph_info[para_idx]["source"])
-
-            for source_file in source_files:
-                clustered_data[cluster_id].append({
-                    "text": meta_para,
-                    "source": source_file,
-                    "fragment_id": i
-                })
-
-    return clustered_data, len(final_paragraphs)
+    return defaultdict(list), total_fragments

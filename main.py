@@ -19,26 +19,6 @@ from strategy.clustering import (
     SemanticClusteringStrategy,
 )
 
-def save_clustered_paragraphs(clustered_data, output_dir):
-    """Сохранение абзацев по тематикам"""
-
-    for cluster_id, paragraphs_data in clustered_data.items():
-        topic_dir = os.path.join(output_dir, f"topic_{cluster_id + 1}")
-        os.makedirs(topic_dir, exist_ok=True)
-
-        paragraphs_by_file = defaultdict(list)
-        for para_data in paragraphs_data:
-            paragraphs_by_file[para_data["source"]].append(para_data)
-
-        for filename, file_paragraphs in paragraphs_by_file.items():
-            base_name = filename.replace(".txt", "")
-            output_file = os.path.join(topic_dir, f"{base_name}.txt")
-
-            with open(output_file, "w", encoding="utf-8") as f:
-                for para_data in file_paragraphs:
-                    f.write(para_data["text"])
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Кластеризация документов по тематикам"
@@ -92,7 +72,12 @@ def main():
         feature_strategy = BERTStrategy()
         clustering_strategy = SemanticClusteringStrategy()
         clustered_data, total_fragments = process_combined(
-            texts, filenames, splitting_strategy, feature_strategy, clustering_strategy
+            texts,
+            filenames,
+            splitting_strategy,
+            feature_strategy,
+            clustering_strategy,
+            args.output,
         )
     else:
         if args.splitting == "paragraph":
@@ -110,20 +95,26 @@ def main():
             feature_strategy = BERTStrategy()
 
         if args.clustering == "dbscan":
-            clustering_strategy = DBSCANClusteringStrategy(eps=args.eps, min_samples=args.min_samples)
+            clustering_strategy = DBSCANClusteringStrategy()
         elif args.clustering == "hdbscan":
             clustering_strategy = HDBSCANClusteringStrategy()
         elif args.clustering == "hierarchical":
             clustering_strategy = HierarchicalClusteringStrategy()
         elif args.clustering == "semantic":
-            clustering_strategy = SemanticClusteringStrategy(eps=args.eps, min_samples=args.min_samples)
+            clustering_strategy = SemanticClusteringStrategy(
+                eps=args.eps, min_samples=args.min_samples
+            )
 
         clustered_data, total_fragments = process_all_documents(
-            texts, filenames, splitting_strategy, feature_strategy, clustering_strategy
+            texts,
+            filenames,
+            splitting_strategy,
+            feature_strategy,
+            clustering_strategy,
+            args.output,
         )
 
-    save_clustered_paragraphs(clustered_data, args.output)
-    evaluate_results(clustered_data, args.output)
+    # evaluate_results(clustered_data, args.output)
 
 
 if __name__ == "__main__":
@@ -131,8 +122,5 @@ if __name__ == "__main__":
     logging.getLogger("transformers").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()
